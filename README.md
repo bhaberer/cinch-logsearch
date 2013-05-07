@@ -1,6 +1,6 @@
-# Cinch::Logsearch
+# Cinch::Plugins::Logsearch
 
-TODO: Write a gem description
+Cinch Plugin to allow users to search through channel logs, easiest used with cinch-simplelog.
 
 ## Installation
 
@@ -18,7 +18,22 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Just add the plugin to your list:
+
+    @bot = Cinch::Bot.new do
+      configure do |c|
+        c.plugins.plugins = [Cinch::Plugins::LogSearch]
+      end
+    end
+
+If your logs are not in `logs/*.logs` you will need to set a config
+value to point to the location of your logs.
+
+    c.plugins.options[Cinch::Plugins::LogSearch][:log_path] = '/var/logs/irc/*.log'
+
+You can also change the number of results returned (Default: 5) by setting an additional config value:
+
+    c.plugins.options[Cinch::Plugins::LogSearch][:max_results] = 10
 
 ## Contributing
 
