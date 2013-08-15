@@ -1,44 +1,57 @@
+require 'cinch'
+
 module Cinch::Plugins
   class LogSearch
     include Cinch::Plugin
 
     self.help = "Use .search <text> to search the logs. *Only works via private message*, limited to 5 results for now."
 
-    match /search (.*)/
+    match /search (.*)/, react_on: :private
+
+    def initialize(*args)
+      super
+      @max_results   = config[:max_results] || 5
+      @log_directory = config[:logs_directory] || File.join('.', 'logs', '*.log')
+    end
 
     def execute(m, search)
-      # Don't listen to searches in channels. Reduce SPAM.
-      return if m.channel?
+      return unless log_files_exist?
 
-      # However, make sure the user is in a channel with the bot
-      chans = @bot.channels
-      chans.delete_if { |chan| !chan.has_user?(m.user) }
-      return if chans.empty?
+      matches = search_for(search)
 
-      @max_results = config[:max_results] || 5
-      @matches = []
-
-      # Search the logs for the phrase, this is pretty simple.
-      Dir[config[:log_path] || File.join('.', 'logs', '*.log')].sort.reverse.each do |file|
-        @matches += File.open(file, 'r').grep(Regexp.new(search))
-        # For the sake of sanity, stop looking once we find @max_results
-        break if @matches.length > @max_results
-      end
-
-      # I hate new lines.
-      @matches.map! { |msg| msg.chomp }
-
-      if @matches.empty?
+      if matches.empty?
         m.user.msg "No matches found!"
       else
-        msg = "Found #{@matches.count} matches"
-        msg << "before giving up" if @matches.length > @max_results
-        msg << ". Here's the last #{@max_results}:"
-        m.user.msg msg
-        @matches[-@max_results..-1].each do |match|
+        msg = ['Found', matches.count, 'matches before giving up,',
+               'here\'s the most recent', @max_results]
+        m.user.msg msg.join(' ')
+        matches.reverse[0..(@max_results - 1)].reverse.each do |match|
           m.user.msg match
         end
       end
+    end
+
+    private
+
+    def log_files_exist?
+      return true if File.exist?(@log_directory)
+      debug 'Log files not found!'
+      false
+    end
+
+    def search_for(search_term)
+      matches = []
+
+      # Search the logs for the phrase, this is pretty simple and kind of dumb.
+      # Probably make this smarter by using a real search algo at some point if people care.
+      Dir[@log_directory].sort.reverse.each do |file|
+        matches += File.open(file, 'r').grep(Regexp.new(search_term))
+        # For the sake of sanity, stop looking once we find @max_results
+        break if matches.length > @max_results
+      end
+
+      # I hate new lines.
+      matches.map(&:chomp)
     end
   end
 end
