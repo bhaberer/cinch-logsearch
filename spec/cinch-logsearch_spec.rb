@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 require 'spec_helper'
 
-LOG = File.join('/tmp', 'cinch-testing.log') 
+LOG = File.join('/tmp', 'cinch-testing.log')
 
 describe Cinch::Plugins::LogSearch do
   include Cinch::Test
@@ -12,28 +12,30 @@ describe Cinch::Plugins::LogSearch do
   end
 
   it 'should not find anything if no logs are present' do
-    get_replies(make_message(@bot, '!search foo'), :private).
-      first.text.should == "No matches found!"
+    msg = get_replies(make_message(@bot, '!search foo'), :private).first
+    expect(msg.text).to eq('No matches found!')
   end
 
   it 'should not return any response when users search in channel' do
-    get_replies(make_message(@bot, '!search foo'), :channel).
-      should be_empty
+    expect(get_replies(make_message(@bot, '!search foo', { channel: '#foo' })))
+      .to be_empty
   end
 
   it 'should let users search log files' do
-    get_replies(make_message(@bot, '!search movie'), :private).
-      first.text.should == "Found 1 matches before giving up, here's the most recent 5"
+    msg = get_replies(make_message(@bot, '!search movie'), :private).first
+    expect(msg.text)
+      .to eq('Found 1 matches before giving up, here\'s the most recent 5')
   end
 
-  it 'should allow users to do complex searches' do 
-    get_replies(make_message(@bot, '!search \sw.+\s'), :private).
-      first.text.should == "Found 3 matches before giving up, here's the most recent 5"
+  it 'should allow users to do complex searches' do
+    msg = get_replies(make_message(@bot, '!search \sw.+\s'), :private).first
+    expect(msg.text)
+      .to eq('Found 3 matches before giving up, here\'s the most recent 5')
   end
 end
 
-def build_logs 
-  log = <<"  EOF" 
+def build_logs
+  log = <<"  EOF"
   [2012-07-24 23:09:15] <Carnivor> Oh. Good. You timed out.
   [2012-07-24 23:09:20] <feen> no
   [2012-07-24 23:09:22] <feen> i got back home
@@ -54,7 +56,7 @@ def build_logs
   [2012-07-24 23:10:51] <feen> ten thousand times
   [2012-07-24 23:11:27] <silveridea> well im going to attempt sleep
   EOF
-  File.open(LOG, 'w') do |file| 
+  File.open(LOG, 'w') do |file|
     file.write(log)
   end
 end
